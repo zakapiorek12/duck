@@ -1,5 +1,4 @@
 ﻿using OpenTK;
-using OpenTK.Graphics.OpenGL;
 using System;
 using System.Drawing;
 
@@ -18,8 +17,8 @@ namespace Duck
 
         public Camera() : base()
         {
-            cameraPosition = new Vector3(0, 0, 3);
-            Rotate(new Point(0, 0));
+            cameraPosition = new Vector3(.5f, .15f, 1);
+            Rotate(new Point(-1, 160));
             CalculateResultMartix();
         }
 

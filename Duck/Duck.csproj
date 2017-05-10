@@ -55,9 +55,14 @@
     <Compile Include="Events.cs" />
     <Compile Include="GLRenderer.cs" />
     <Compile Include="MainWindow.cs" />
+    <Compile Include="Mesh.cs" />
+    <Compile Include="MeshLoader.cs" />
+    <Compile Include="ObjectsToDraw.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Room.cs" />
     <Compile Include="ShaderProgram.cs" />
+    <Compile Include="Water.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

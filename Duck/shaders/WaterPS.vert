@@ -12,7 +12,6 @@ uniform float ambientCoefficient;
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 
-uniform vec4 surfaceColor;
 uniform float materialSpecExponent;
 uniform vec3 specularColor;
 
@@ -23,9 +22,13 @@ in vec3 fs_position;
 in vec3 fs_normal;
 in vec2 fs_texturePos;
 */
+
+uniform vec4 surfaceColor;
+
+
 out vec4 color;
 
 void main(){
 	
-	color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	color = surfaceColor;
 }

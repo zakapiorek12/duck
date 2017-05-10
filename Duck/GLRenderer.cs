@@ -19,32 +19,28 @@ namespace Duck
         private Vector3 lightColor = new Vector3(0.9f, 0.8f, 0.8f);
         private Vector3 lightPosition = new Vector3(-1.0f, 4.0f, 2.0f);
 
-        //private static List<Mesh>[] meshesToDraw;
-        //private static List<AnimatedObject> animatedObjects = new List<AnimatedObject>();
-        //private Mesh rectangle;
-        //private Reflection robotReflection, particlesReflection;
+        private static List<Mesh>[] meshesToDraw;
+        private static List<ObjectsToDraw> objectsToDraw;
 
-        private static readonly int maximumContourEdges = 10000;
-        //Edge[] contourEdges = new Edge[maximumContourEdges];
-        //Mesh[] shadowFaces = new Mesh[maximumContourEdges];
-
-        //MeshLoader meshLoader = new MeshLoader();
-        //private Robot robot;
-        //private Emitter emitter;
+        MeshLoader meshLoader = new MeshLoader();
 
         private int plateTextureID, particleTextureID;
 
+        static GLRenderer()
+        {
+            objectsToDraw = new List<ObjectsToDraw>();
+            meshesToDraw = new List<Mesh>[Enum.GetValues(typeof(MyShaderType)).Length];
+            for (int i = 0; i < meshesToDraw.Length; i++)
+                meshesToDraw[i] = new List<Mesh>();
+        }
+
         public GLRenderer(int viewPortWidth, int viewportHeight)
         {
-            //meshesToDraw = new List<Mesh>[Enum.GetValues(typeof(MyShaderType)).Length];
-            //for (int i = 0; i < meshesToDraw.Length; i++)
-            //    meshesToDraw[i] = new List<Mesh>();
-
             LoadShaders();
             //LoadTexture("plate.jpg", ref plateTextureID);
             //LoadTexture("iskra.jpg", ref particleTextureID);
             CreateProjectionMatrix(viewPortWidth, viewportHeight);
-            //CreateScene();
+            CreateScene();
 
             GL.ClearColor(Color.Black);
         }
@@ -72,31 +68,19 @@ namespace Duck
             projectionMatrix.Transpose();
         }
 
-        /*private void CreateScene()
+        private void CreateScene()
         {
-            rectangle = meshLoader.GetRectangleMesh(1.5f, 1.0f, new Vector4(0.4f, 0.4f, 0.4f, 0.6f));
-            rectangle.isPlate = 1;
-            rectangle.ModelMatrix = Matrix4.CreateRotationY((float)(Math.PI / 2.0f)) *
-                                     Matrix4.CreateRotationZ((float)(30.0f * Math.PI / 180.0f)) *
-                                     Matrix4.CreateTranslation(-1.5f, 0.0f, 0.0f);
-            rectangle.CalculateInverted();
-            robot = new Robot(rectangle);
+            Water water = new Water(MyShaderType.WATER);
+            water.AddOnScene();
 
-            emitter = new Emitter(robot, MyShaderType.PARTICLES);
-
-            robotReflection = new Reflection(robot.meshes, rectangle);
-            particlesReflection = new Reflection(emitter.particlesMeshes, rectangle);
-
-            AddMeshToDraw(rectangle, MyShaderType.PHONG_LIGHT);
-
-            robot.AddOnScene(MyShaderType.PHONG_LIGHT);
-
+            /*
             float floorYOffset = -1.0f;
             float roomSize = 10.0f;
             Vector4 roomColor = new Vector4(0.2f, 0.8f, 0.2f, 1.0f);
             Mesh floor = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
             floor.ModelMatrix = Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)) * Matrix4.CreateTranslation(0, floorYOffset, 0);
             GLRenderer.AddMeshToDraw(floor, MyShaderType.PHONG_LIGHT);
+
 
             Mesh ceiling = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
             ceiling.ModelMatrix = Matrix4.CreateRotationX((float)(Math.PI / 2.0f)) * Matrix4.CreateTranslation(0, roomSize + floorYOffset, 0);
@@ -112,18 +96,8 @@ namespace Duck
 
             Mesh front = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
             front.ModelMatrix = Matrix4.CreateTranslation(0, roomSize / 2.0f + floorYOffset, -roomSize / 2.0f);
-            GLRenderer.AddMeshToDraw(front, MyShaderType.PHONG_LIGHT);
-
-            Mesh back = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            back.ModelMatrix = Matrix4.CreateRotationY((float)(Math.PI)) * Matrix4.CreateTranslation(0, roomSize / 2.0f + floorYOffset, roomSize / 2.0f);
-            GLRenderer.AddMeshToDraw(back, MyShaderType.PHONG_LIGHT);
-
-            Mesh cylinder = meshLoader.GetCylinderMesh(0.5f, 2.5f, new Vector4(0, 0, 1, 1), 40);
-            cylinder.ModelMatrix = Matrix4.CreateRotationX((float)(Math.PI / 2.0f)) *
-                                   Matrix4.CreateTranslation(1.5f, 0.51f + floorYOffset, 0.0f) *
-                                   Matrix4.CreateRotationY((float)(Math.PI / 2.0f));
-            AddMeshToDraw(cylinder, MyShaderType.PHONG_LIGHT);
-        }*/
+            GLRenderer.AddMeshToDraw(front, MyShaderType.PHONG_LIGHT);//*/
+        }
 
         private void LoadTexture(string name, ref int id)
         {
@@ -150,14 +124,13 @@ namespace Duck
 
         public void DoScene(float deltaTime, Camera camera)
         {
-            //foreach (var anim in animatedObjects)
-            //    anim.DoAnimation(deltaTime);
+            foreach (ObjectsToDraw otd in objectsToDraw)
+                otd.DoAnimation(deltaTime);
 
             GL.DepthMask(true);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             RenderParticles(deltaTime, camera, true);
-            RenderWithPhongLightShader(camera);
             RenderParticles(deltaTime, camera, false);
 
             //tutaj dodac renderowanie przez nowe shadery
@@ -176,58 +149,20 @@ namespace Duck
             BindLightDataToShaders(activeShader);
 
             GL.DepthMask(false);
-            //foreach (Mesh m in meshesToDraw[(int)MyShaderType.PARTICLES])
-            //    DrawMesh(m, activeShader, PrimitiveType.Points);
+            foreach (Mesh m in meshesToDraw[(int)MyShaderType.WATER])
+                DrawMesh(m, activeShader, PrimitiveType.Points);
 
             GL.Flush();
         }
 
-        private void RenderWithPhongLightShader(Camera camera)
+        private void DrawMesh(Mesh m, ShaderProgram shader, PrimitiveType mode = PrimitiveType.Triangles)
         {
-            ShaderProgram activeShader = shaders[MyShaderType.WATER];
-            GL.UseProgram(activeShader.ProgramID);
+            m.BindVAO();
+            BindMeshMaterialDataToShaders(m, shader);
 
-            GL.Enable(EnableCap.DepthTest);
-
-            GL.Enable(EnableCap.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, plateTextureID);
-
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-
-            BindCameraAndProjectionToShaders(camera, activeShader);
-            BindLightDataToShaders(activeShader);
-            
-            //RenderShadows(activeShader);
-            //foreach (Mesh m in meshesToDraw[(int)MyShaderType.PHONG_LIGHT])
-            //    DrawMesh(m, activeShader);
-
-            GL.Flush();
+            GL.UniformMatrix4(shader.GetUniform("object_matrix"), false, ref m.ModelMatrix);
+            GL.DrawElements(mode, m.IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
         }
-
-        //private void DrawMesh(Mesh m, ShaderProgram shader, PrimitiveType mode = PrimitiveType.Triangles)
-        //{
-        //    m.BindVAO();
-        //    BindMeshMaterialDataToShaders(m, shader);
-
-        //    GL.UniformMatrix4(shader.GetUniform("object_matrix"), false, ref m.ModelMatrix);
-        //    GL.DrawElements(mode, m.IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
-        //}
-
-        //private void AddNewShadowFace(ref int shadowFacesInd, Vector3 vert1, Vector3 vert2, Vector3 vert3, Vector3 vert4)
-        //{
-        //    if (shadowFaces[shadowFacesInd] != null)
-        //    {
-        //        shadowFaces[shadowFacesInd].VertexBuffer[0] = shadowFaces[shadowFacesInd].NormalizedVertexBuffer[0].vertex = vert1;
-        //        shadowFaces[shadowFacesInd].VertexBuffer[1] = shadowFaces[shadowFacesInd].NormalizedVertexBuffer[1].vertex = vert2;
-        //        shadowFaces[shadowFacesInd].VertexBuffer[2] = shadowFaces[shadowFacesInd].NormalizedVertexBuffer[2].vertex = vert3;
-        //        shadowFaces[shadowFacesInd].VertexBuffer[3] = shadowFaces[shadowFacesInd].NormalizedVertexBuffer[3].vertex = vert4;
-        //        shadowFaces[shadowFacesInd].FillVbos();
-        //    }
-        //    else
-        //        shadowFaces[shadowFacesInd] = meshLoader.GetShadowQuadMesh(vert1, vert2, vert3, vert4);
-        //    shadowFacesInd++;
-        //}
 
         private void BindCameraAndProjectionToShaders(Camera camera, ShaderProgram shader)
         {
@@ -243,33 +178,33 @@ namespace Duck
             GL.Uniform1(shader.GetUniform("ambientCoefficient"), ambientCoefficient);
         }
 
-        //private void BindMeshMaterialDataToShaders(Mesh m, ShaderProgram shader)
-        //{
-        //    GL.Uniform1(shader.GetUniform("materialSpecExponent"), m.materialSpecExponent);
-        //    GL.Uniform3(shader.GetUniform("specularColor"), m.materialDiffuseSpecularColor);
-        //    GL.Uniform4(shader.GetUniform("surfaceColor"), m.surfaceColor);
-        //    GL.Uniform1(shader.GetUniform("isPlate"), m.isPlate);
-        //}
+        private void BindMeshMaterialDataToShaders(Mesh m, ShaderProgram shader)
+        {
+            GL.Uniform1(shader.GetUniform("materialSpecExponent"), m.materialSpecExponent);
+            GL.Uniform3(shader.GetUniform("specularColor"), m.materialDiffuseSpecularColor);
+            GL.Uniform4(shader.GetUniform("surfaceColor"), m.surfaceColor);
+            GL.Uniform1(shader.GetUniform("isPlate"), m.isPlate);
+        }
 
-        //public static void AddMeshToDraw(Mesh m, MyShaderType shaderType)
-        //{
-        //    meshesToDraw[(int)shaderType].Add(m);
-        //}
+        public static void AddMeshToDraw(Mesh m, MyShaderType shaderType)
+        {
+            meshesToDraw[(int)shaderType].Add(m);
+        }
 
-        //public static void AddAnimatedObject(AnimatedObject animObj)
-        //{
-        //    animatedObjects.Add(animObj);
-        //}
+        public static void AddAnimatedObject(ObjectsToDraw otd)
+        {
+            objectsToDraw.Add(otd);
+        }
 
-        //public static void RemoveMeshToDraw(Mesh m)
-        //{
-        //    for (int i = 0; i < (int)Enum.GetValues(typeof(MyShaderType)).Length; i++)
-        //        meshesToDraw[i].Remove(m);
-        //}
+        public static void RemoveMeshToDraw(Mesh m)
+        {
+            for (int i = 0; i < (int)Enum.GetValues(typeof(MyShaderType)).Length; i++)
+                meshesToDraw[i].Remove(m);
+        }
 
-        //public static void RemoveAnimatedObject(AnimatedObject animObj)
-        //{
-        //    animatedObjects.Remove(animObj);
-        //}
+        public static void RemoveAnimatedObject(ObjectsToDraw otd)
+        {
+            objectsToDraw.Remove(otd);
+        }
     }
 }
