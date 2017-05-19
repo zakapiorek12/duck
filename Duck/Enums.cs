@@ -6,6 +6,7 @@
     }
     public enum MyShaderType
     {
-        WATER
+        WATER,
+        CUBE
     }
 }

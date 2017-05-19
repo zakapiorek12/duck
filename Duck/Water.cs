@@ -1,5 +1,6 @@
 ﻿using OpenTK;
 using System;
+using System.Drawing;
 
 namespace Duck
 {
@@ -46,7 +47,7 @@ namespace Duck
             c = 1f;
             dt = 1f/N;
 
-            surfaceColor = new Vector4(0f, .2f, .9f, 1f);
+            surfaceColor = new Vector4(.5f, .5f, .5f, .5f);//(0f, .2f, .9f, 1f);
 
             firstMap = new float[N, N];
             secondMap = new float[N, N];
@@ -56,7 +57,7 @@ namespace Duck
                     dumpingFactor[i, j] = GetDumpingFactor(i, j);
 
             MeshLoader ml = new MeshLoader();
-            meshes = new Mesh[1] { ml.GetWaterMesh(h / 3, surfaceColor, N) };
+            meshes = new Mesh[1] { ml.GetWaterMesh(2f/ N, surfaceColor, (uint)N) };
         }
 
         private float GetDumpingFactor(int i, int j)
@@ -70,7 +71,8 @@ namespace Duck
 
         public override void DoAnimation(float deltaTime)
         {
-            RandomDropOfWater();
+            if (rand.NextDouble() < 0.7)
+                RandomDropOfWater();
             CalculateWave(deltaTime);
         }
 
@@ -79,15 +81,24 @@ namespace Duck
             float A = (c * c * dt * dt) / (h * h);
             float B = 2 - 4 * A;
 
-            int vertNo = 0;
-
             for (int i = 1; i < N - 1; i++)
                 for (int j = 1; j < N - 1; j++)
                 {
                     float neighbourSum = AssistantMap[i - 1, j] + AssistantMap[i + 1, j] + AssistantMap[i, j - 1] + AssistantMap[i, j + 1];
                     MainMap[i, j] = dumpingFactor[i, j] * (A * neighbourSum + B * AssistantMap[i, j] - MainMap[i, j]);
-                    meshes[0].UpdatePosition(i / (float)N, MainMap[i, j], j / (float)N, vertNo++);
+                    //meshes[0].UpdatePosition(i / (float)N, MainMap[i, j], j / (float)N, i * N + j);
                 }
+
+            for (int i = 1; i < N - 1; i++)
+                for (int j = 1; j < N - 1; j++)
+                {
+                    Vector3 dx = new Vector3(1, (MainMap[i + 1, j] - MainMap[i - 1, j]) * 10, 0);
+                    Vector3 dz = new Vector3(0, (MainMap[i, j + 1] - MainMap[i, j - 1]) * 10, 1);
+                    Vector3 normal = -Vector3.Cross(dx, dz).Normalized();
+
+                    meshes[0].UpdateNormal(normal, i * N + j);
+                }
+
             meshes[0].FillVbos();
             ChangeMainMap();
         }

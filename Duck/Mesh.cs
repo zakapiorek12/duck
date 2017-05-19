@@ -30,7 +30,7 @@ namespace Duck
         public Vector4 surfaceColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
         public float materialSpecExponent = 32f;
         public Vector3 materialDiffuseSpecularColor = new Vector3(0.5f, 0.5f, 0.5f);
-        public int isPlate = 0;
+        public int isCube = 0;
 
         public Mesh(Vector3[] vertices, Normalized[] normalized, uint[] indices)
         {
@@ -88,6 +88,11 @@ namespace Duck
             NormalizedVertexBuffer[vertNo].vertex.Z = z;
         }
 
+        internal void UpdateNormal(Vector3 normal, int vertNo)
+        {
+            NormalizedVertexBuffer[vertNo].normal = normal;
+        }
+
         public void FillVbos()
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, positionVbo);
@@ -105,6 +110,7 @@ namespace Duck
                 NormalizedVertexBuffer.Select((n) => n.texturePos).ToArray(), BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         }
+
 
         private void CreateElementBufferObject()
         {

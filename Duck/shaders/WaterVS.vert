@@ -10,15 +10,15 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texturePos;
 
-//out vec3 fs_position;
-//out vec3 fs_normal;
-//out vec2 fs_texturePos;
+out vec3 fs_position;
+varying vec3 fs_normal;
+out vec3 fs_texturePos;
 
 void main()
 {
     gl_Position = projection_matrix * cameraview_matrix * object_matrix * vec4(position, 1.0f);
 
-	/*fs_position = position;
+	fs_position = position;
 	fs_normal = normal;
-	fs_texturePos = texturePos;*/
+	fs_texturePos = (vec3(1,1,1) + position) / 2;
 }

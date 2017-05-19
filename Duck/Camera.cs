@@ -9,7 +9,7 @@ namespace Duck
         public Matrix4 ResultMatrix = Matrix4.Identity;
         Vector3 cameraPosition = new Vector3();
         float cameraDistMove = .05f;
-        float cameraWheelMove = .5f;
+        float cameraWheelMove = .05f;
         float cameraRotate = .005f;
         float latitude = 0, longitude = 0;
 

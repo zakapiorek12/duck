@@ -12,19 +12,20 @@ namespace Duck
     public class GLRenderer
     {
         private Matrix4 projectionMatrix;
+        private int cubeTextureNr = 0;
 
         private Dictionary<MyShaderType, ShaderProgram> shaders = new Dictionary<MyShaderType, ShaderProgram>();
 
         private float ambientCoefficient = 1.0f;
         private Vector3 lightColor = new Vector3(0.9f, 0.8f, 0.8f);
-        private Vector3 lightPosition = new Vector3(-1.0f, 4.0f, 2.0f);
+        private Vector3 lightPosition = new Vector3(1.0f, 1.0f, 2.0f);
 
         private static List<Mesh>[] meshesToDraw;
         private static List<ObjectsToDraw> objectsToDraw;
 
         MeshLoader meshLoader = new MeshLoader();
 
-        private int plateTextureID, particleTextureID;
+        private int cubeTextureID;
 
         static GLRenderer()
         {
@@ -37,10 +38,9 @@ namespace Duck
         public GLRenderer(int viewPortWidth, int viewportHeight)
         {
             LoadShaders();
-            //LoadTexture("plate.jpg", ref plateTextureID);
-            //LoadTexture("iskra.jpg", ref particleTextureID);
             CreateProjectionMatrix(viewPortWidth, viewportHeight);
             CreateScene();
+            CreateCubeTexture(ref cubeTextureID);
 
             GL.ClearColor(Color.Black);
         }
@@ -73,36 +73,13 @@ namespace Duck
             Water water = new Water(MyShaderType.WATER);
             water.AddOnScene();
 
-            /*
-            float floorYOffset = -1.0f;
-            float roomSize = 10.0f;
-            Vector4 roomColor = new Vector4(0.2f, 0.8f, 0.2f, 1.0f);
-            Mesh floor = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            floor.ModelMatrix = Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)) * Matrix4.CreateTranslation(0, floorYOffset, 0);
-            GLRenderer.AddMeshToDraw(floor, MyShaderType.PHONG_LIGHT);
-
-
-            Mesh ceiling = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            ceiling.ModelMatrix = Matrix4.CreateRotationX((float)(Math.PI / 2.0f)) * Matrix4.CreateTranslation(0, roomSize + floorYOffset, 0);
-            GLRenderer.AddMeshToDraw(ceiling, MyShaderType.PHONG_LIGHT);
-
-            Mesh left = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            left.ModelMatrix = Matrix4.CreateRotationY((float)(Math.PI / 2.0f)) * Matrix4.CreateTranslation(-roomSize / 2.0f, roomSize / 2.0f + floorYOffset, 0);
-            GLRenderer.AddMeshToDraw(left, MyShaderType.PHONG_LIGHT);
-
-            Mesh right = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            right.ModelMatrix = Matrix4.CreateRotationY((float)(-Math.PI / 2.0f)) * Matrix4.CreateTranslation(roomSize / 2.0f, roomSize / 2.0f + floorYOffset, 0);
-            GLRenderer.AddMeshToDraw(right, MyShaderType.PHONG_LIGHT);
-
-            Mesh front = meshLoader.GetRectangleMesh(roomSize, roomSize, roomColor);
-            front.ModelMatrix = Matrix4.CreateTranslation(0, roomSize / 2.0f + floorYOffset, -roomSize / 2.0f);
-            GLRenderer.AddMeshToDraw(front, MyShaderType.PHONG_LIGHT);//*/
+            MeshLoader ml = new MeshLoader();
+            Mesh cube = ml.GetCube();
+            AddMeshToDraw(cube, MyShaderType.CUBE);
         }
 
-        private void LoadTexture(string name, ref int id)
+        private void LoadTexture(Bitmap texture, ref int id)
         {
-            Bitmap texture = new Bitmap(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "textures", name));
-
             GL.GenTextures(1, out id);
             GL.BindTexture(TextureTarget.Texture2D, id);
 
@@ -122,35 +99,96 @@ namespace Duck
             texture.UnlockBits(data);
         }
 
+        public void CreateCubeTexture(ref int id)
+        {
+            GL.GenTextures(1, out id);
+            GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
+            GL.BindTexture(TextureTarget.TextureCubeMap, id);
+
+            string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            foreach (int i in new int[] { 0, 1, 2, 3, 4, 5 })
+            {
+                Bitmap texture = new Bitmap(Path.Combine(root, @"texture\bok.jpg"));
+                BitmapData data = texture.LockBits(new System.Drawing.Rectangle(0, 0, texture.Width, texture.Height),
+                     ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height,
+                    0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                texture.UnlockBits(data);
+                texture.Dispose();
+            }
+
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
+
+
+            GL.BindTexture(TextureTarget.TextureCubeMap, 0);
+            //GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
+
+        }
+
         public void DoScene(float deltaTime, Camera camera)
         {
             foreach (ObjectsToDraw otd in objectsToDraw)
                 otd.DoAnimation(deltaTime);
 
-            GL.DepthMask(true);
+            GL.ClearColor(Color.Brown);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-            RenderParticles(deltaTime, camera, true);
-            RenderParticles(deltaTime, camera, false);
+            RenderParticles(deltaTime, camera);
+            RenderCube(camera);
 
             //tutaj dodac renderowanie przez nowe shadery
         }
 
-        private void RenderParticles(float deltaTime, Camera camera, bool onlyStencil)
+        private void RenderParticles(float deltaTime, Camera camera)
         {
             ShaderProgram activeShader = shaders[MyShaderType.WATER];
             GL.UseProgram(activeShader.ProgramID);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.CullFace);
 
-            GL.BindTexture(TextureTarget.Texture2D, particleTextureID);
+            GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
+            GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
 
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
+            GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
 
             BindCameraAndProjectionToShaders(camera, activeShader);
             BindLightDataToShaders(activeShader);
 
-            GL.DepthMask(false);
+            GL.Begin(PrimitiveType.Triangles);
+
+            GL.Color3(lightColor);
+            GL.Vertex3(lightPosition);
+            GL.Vertex3(lightPosition + new Vector3(1.0f, 0.0f, 0.0f));
+            GL.Vertex3(lightPosition + new Vector3(0.0f, 1.0f, 0.0f));
+
+            GL.End();
+
             foreach (Mesh m in meshesToDraw[(int)MyShaderType.WATER])
-                DrawMesh(m, activeShader, PrimitiveType.Points);
+                DrawMesh(m, activeShader, PrimitiveType.Quads);
+
+            GL.Flush();
+        }
+
+        private void RenderCube(Camera camera)
+        {
+            ShaderProgram activeShader = shaders[MyShaderType.WATER];
+            GL.UseProgram(activeShader.ProgramID);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.FrontFace(FrontFaceDirection.Cw);
+
+            GL.Enable(EnableCap.TextureCubeMap);
+            GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
+
+            foreach (Mesh m in meshesToDraw[(int)MyShaderType.CUBE])
+                DrawMesh(m, activeShader, PrimitiveType.Quads);
 
             GL.Flush();
         }
@@ -183,7 +221,7 @@ namespace Duck
             GL.Uniform1(shader.GetUniform("materialSpecExponent"), m.materialSpecExponent);
             GL.Uniform3(shader.GetUniform("specularColor"), m.materialDiffuseSpecularColor);
             GL.Uniform4(shader.GetUniform("surfaceColor"), m.surfaceColor);
-            GL.Uniform1(shader.GetUniform("isPlate"), m.isPlate);
+            GL.Uniform1(shader.GetUniform("isCube"), m.isCube);
         }
 
         public static void AddMeshToDraw(Mesh m, MyShaderType shaderType)
