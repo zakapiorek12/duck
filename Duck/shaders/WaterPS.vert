@@ -27,6 +27,11 @@ uniform vec4 surfaceColor;
 out vec4 color;
 
 void main(){
+	if(isCube == 1)
+	{
+		color = texture(cubeSampler, normalize(fs_texturePos));
+		return;
+	}
 	vec3 normal = normalize(transpose(inverse(mat3(object_matrix))) * fs_normal);
 	vec3 surfacePos = vec3(object_matrix * vec4(fs_position, 1));
 	vec3 surfaceToLight = normalize(lightPosition - surfacePos);
@@ -48,7 +53,4 @@ void main(){
 	specular = specularCoefficient * specularColor * lightColor;
 	
 	color = vec4(ambient + diffuse + specular, surfaceColor.a);
-	
-	if(isCube == 1)
-		color = texture(cubeSampler, normalize(fs_texturePos));
 }

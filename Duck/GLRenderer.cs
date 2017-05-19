@@ -107,9 +107,11 @@ namespace Duck
 
             string root = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
+            string[] paths = new string[] { "posx", "negx", "posy", "negy", "posz", "negz" };
+
             foreach (int i in new int[] { 0, 1, 2, 3, 4, 5 })
             {
-                Bitmap texture = new Bitmap(Path.Combine(root, @"texture\bok.jpg"));
+                Bitmap texture = new Bitmap(Path.Combine(root, "texture", paths[i] + ".jpg"));
                 BitmapData data = texture.LockBits(new System.Drawing.Rectangle(0, 0, texture.Width, texture.Height),
                      ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 

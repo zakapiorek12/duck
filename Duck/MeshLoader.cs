@@ -90,7 +90,7 @@ namespace Duck
                     rightNormal = -Vector3.UnitX,
                     topNormal = -Vector3.UnitY,
                     bottomNormal = Vector3.UnitY;
-        
+
             Normalized[] normalized = new Normalized[]
             {
                 //front face
@@ -104,6 +104,30 @@ namespace Duck
                 new Normalized() {normal = backNormal, vertex = vertices[2]},
                 new Normalized() {normal = backNormal, vertex = vertices[1]},
                 new Normalized() {normal = backNormal, vertex = vertices[0]},
+
+                //left face
+                new Normalized() {normal = leftNormal, vertex = vertices[6] },
+                new Normalized() {normal = leftNormal, vertex = vertices[2] },
+                new Normalized() {normal = leftNormal, vertex = vertices[3] },
+                new Normalized() {normal = leftNormal, vertex = vertices[7] },
+
+                //right face
+                new Normalized() {normal = rightNormal, vertex = vertices[1] },
+                new Normalized() {normal = rightNormal, vertex = vertices[5] },
+                new Normalized() {normal = rightNormal, vertex = vertices[4] },
+                new Normalized() {normal = rightNormal, vertex = vertices[0] },
+
+                //top face
+                new Normalized() {normal = topNormal, vertex = vertices[4] },
+                new Normalized() {normal = topNormal, vertex = vertices[7] },
+                new Normalized() {normal = topNormal, vertex = vertices[3] },
+                new Normalized() {normal = topNormal, vertex = vertices[0] },
+
+                //bottom face
+                new Normalized() {normal = bottomNormal, vertex = vertices[2] },
+                new Normalized() {normal = bottomNormal, vertex = vertices[6] },
+                new Normalized() {normal = bottomNormal, vertex = vertices[5] },
+                new Normalized() {normal = bottomNormal, vertex = vertices[1] },
             };
             uint[] indices = new uint[normalized.Length];
             for (uint i = 0; i < indices.Length; i++)

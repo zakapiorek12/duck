@@ -20,5 +20,5 @@ void main()
 
 	fs_position = position;
 	fs_normal = normal;
-	fs_texturePos = (vec3(1,1,1) + position) / 2;
+	fs_texturePos = position;
 }
