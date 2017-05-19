@@ -152,11 +152,6 @@ namespace Duck
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
 
-            GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
-            GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
-
-            GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
-
             BindCameraAndProjectionToShaders(camera, activeShader);
             BindLightDataToShaders(activeShader);
 
@@ -185,7 +180,15 @@ namespace Duck
             GL.FrontFace(FrontFaceDirection.Cw);
 
             GL.Enable(EnableCap.TextureCubeMap);
+
+
+            GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
+            GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
             GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
+
+
+            BindCameraAndProjectionToShaders(camera, activeShader);
+            BindLightDataToShaders(activeShader);
 
             foreach (Mesh m in meshesToDraw[(int)MyShaderType.CUBE])
                 DrawMesh(m, activeShader, PrimitiveType.Quads);
