@@ -13,12 +13,15 @@ layout(location = 2) in vec2 texturePos;
 out vec3 fs_position;
 varying vec3 fs_normal;
 out vec3 fs_texturePos;
+out vec3 fs_worldPos;
 
 void main()
 {
-    gl_Position = projection_matrix * cameraview_matrix * object_matrix * vec4(position, 1.0f);
+	vec4 worldPos = object_matrix * vec4(position, 1.0f);
+    gl_Position = projection_matrix * cameraview_matrix * worldPos;
 
 	fs_position = position;
 	fs_normal = normal;
 	fs_texturePos = position;
+	fs_worldPos = worldPos.xyz;
 }

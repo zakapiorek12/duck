@@ -21,10 +21,20 @@ uniform samplerCube cubeSampler;
 in vec3 fs_position;
 varying vec3 fs_normal;
 in vec3 fs_texturePos;
+in vec3 fs_worldPos;
 
 uniform vec4 surfaceColor;
 
 out vec4 color;
+
+vec3 intRey(vec3 pos, vec3 dir)
+{
+	vec3 t1 = (1 - pos) / dir;
+	vec3 t2 = (-1 - pos) / dir;
+	vec3 t = max(t1, t2);
+	float ts = min(t.x, min(t.y, t.z));
+	return pos + ts * dir;
+}
 
 void main(){
 	if(isCube == 1)
@@ -32,7 +42,25 @@ void main(){
 		color = texture(cubeSampler, normalize(fs_texturePos));
 		return;
 	}
+
+
 	vec3 normal = normalize(transpose(inverse(mat3(object_matrix))) * fs_normal);
+	
+	vec3 viewVec = normalize((cameraModel_matrix * vec4(0, 0, 0, 1)).xyz - fs_worldPos);
+	float n1 = 1.0f;
+    float n2 = 4.0f / 3.0f;
+	float ndotv = dot(normal, viewVec);
+	float refrIndex = ndotv >= 0 ? n1 / n2 : n2 / n1;
+	if (ndotv < 0)
+		normal = -normal;
+
+	vec3 refl = reflect(-viewVec, normal);
+	vec3 res = intRey(fs_position, refl);
+	vec3 reflColor = texture(cubeSampler, normalize(res)).xyz;
+	color = vec4(reflColor, 0.0f);
+	return;
+
+
 	vec3 surfacePos = vec3(object_matrix * vec4(fs_position, 1));
 	vec3 surfaceToLight = normalize(lightPosition - surfacePos);
 	vec3 surfaceToCamera = normalize((cameraModel_matrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz - surfacePos);
