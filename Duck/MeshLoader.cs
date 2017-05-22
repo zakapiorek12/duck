@@ -1,44 +1,18 @@
 ﻿using System;
 using OpenTK;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
 
 namespace Duck
 {
+
     class MeshLoader
     {
         Mesh[] mesh;
 
-        public Mesh GetRectangleMesh(float width, float height, Vector4 surfaceColor)
-        {
-            Vector3[] vertices = new Vector3[]
-            {
-                new Vector3(-width/2.0f, -height/2.0f, 0.0f),
-                new Vector3(-width/2.0f, height/2.0f, 0.0f),
-                new Vector3(width/2.0f, -height/2.0f, 0.0f),
-                new Vector3(width/2.0f, height/2.0f, 0.0f)
-            };
-            Vector3 faceNormal = Vector3.UnitZ;
-            Normalized[] normalized = new Normalized[]
-            {
-                //front face
-                new Normalized() {normal = faceNormal, vertex = vertices[0], texturePos = new Vector2(0.0f, 0.0f)},
-                new Normalized() {normal = faceNormal, vertex = vertices[2], texturePos = new Vector2(0.0f, 1.0f)},
-                new Normalized() {normal = faceNormal, vertex = vertices[1], texturePos = new Vector2(1.0f, 0.0f)},
-                new Normalized() {normal = faceNormal, vertex = vertices[1], texturePos = new Vector2(1.0f, 0.0f)},
-                new Normalized() {normal = faceNormal, vertex = vertices[2], texturePos = new Vector2(0.0f, 1.0f)},
-                new Normalized() {normal = faceNormal, vertex = vertices[3], texturePos = new Vector2(1.0f, 1.0f)}
-            };
-            uint[] indices = new uint[normalized.Length];
-            for (uint i = 0; i < indices.Length; i++)
-                indices[i] = i;
-
-            Mesh m = new Mesh(vertices, normalized, indices);
-            m.surfaceColor = surfaceColor;
-            m.materialDiffuseSpecularColor = surfaceColor.Xyz;
-            return m;
-        }
-
-        internal Mesh GetWaterMesh(float width, Vector4 surfaceColor, uint N)
+        public Mesh GetWaterMesh(float width, Vector4 surfaceColor, uint N)
         {
             float shift = width * N / 2;
             Vector3[] vertices = new Vector3[N * N];
@@ -136,6 +110,60 @@ namespace Duck
             Mesh m = new Mesh(vertices, normalized, indices);
             m.isCube = 1;
             return m;
+        }
+
+        public Mesh LoadMesh(string name)
+        {
+            string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"mesh", name + ".txt");
+
+            List<Vector3> vertexes = new List<Vector3>();
+            List<Normalized> normalized = new List<Normalized>();
+            List<uint> indexes = new List<uint>();
+
+            NumberFormatInfo nfi = new NumberFormatInfo();
+            nfi.NegativeSign = "-";
+
+            using (FileStream fileStream = File.OpenRead(path))
+            using (StreamReader streamReader = new StreamReader(fileStream))
+            {
+                string line = streamReader.ReadLine();
+                uint vertexCount = uint.Parse(line);
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    line = streamReader.ReadLine();
+                    string[] xyz = line.Split(' ');
+                    float x = float.Parse(xyz[0], nfi);
+                    float y = float.Parse(xyz[1], nfi);
+                    float z = float.Parse(xyz[2], nfi);
+
+                    float nx = float.Parse(xyz[3], nfi);
+                    float ny = float.Parse(xyz[4], nfi);
+                    float nz = float.Parse(xyz[5], nfi);
+
+                    float tx = float.Parse(xyz[6], nfi);
+                    float ty = float.Parse(xyz[7], nfi);
+
+                    normalized.Add(new Normalized
+                    {
+                        normal = new Vector3(nx, ny, nz),
+                        vertex = new Vector3(x, y, z),
+                        texturePos = new Vector2(tx, ty)
+                    });
+                }
+
+                line = streamReader.ReadLine();
+                uint trainglesCount = uint.Parse(line);
+                for (int i = 0; i < trainglesCount; i++)
+                {
+                    line = streamReader.ReadLine();
+                    string[] abc = line.Split(' ');
+                    indexes.Add(uint.Parse(abc[0]));
+                    indexes.Add(uint.Parse(abc[1]));
+                    indexes.Add(uint.Parse(abc[2]));
+                }
+            }
+
+            return new Mesh(new Vector3[0], normalized.ToArray(), indexes.ToArray());
         }
     }
 }

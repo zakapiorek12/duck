@@ -18,7 +18,7 @@ namespace Duck
 
         private float ambientCoefficient = 1.0f;
         private Vector3 lightColor = new Vector3(0.9f, 0.8f, 0.8f);
-        private Vector3 lightPosition = new Vector3(1.0f, 1.0f, 2.0f);
+        private Vector3 lightPosition = new Vector3(1.0f, 1.0f, 1.0f);
 
         private static List<Mesh>[] meshesToDraw;
         private static List<ObjectsToDraw> objectsToDraw;
@@ -26,6 +26,7 @@ namespace Duck
         MeshLoader meshLoader = new MeshLoader();
 
         private int cubeTextureID;
+        private int duckTextureID;
 
         static GLRenderer()
         {
@@ -41,6 +42,7 @@ namespace Duck
             CreateProjectionMatrix(viewPortWidth, viewportHeight);
             CreateScene();
             CreateCubeTexture(ref cubeTextureID);
+            LoadTexture("ducktex.jpg", ref duckTextureID);
 
             GL.ClearColor(Color.Black);
         }
@@ -50,6 +52,10 @@ namespace Duck
             ShaderProgram shaderProgram = new ShaderProgram("shaders/WaterVS.vert",
                 "shaders/WaterPS.vert", true);
             shaders.Add(MyShaderType.WATER, shaderProgram);
+
+            shaderProgram = new ShaderProgram("shaders/DuckVS.vert",
+                "shaders/DuckPS.vert", true);
+            shaders.Add(MyShaderType.DUCK, shaderProgram);
         }
 
         public void CreateProjectionMatrix(int viewportWidth, int viewportHeight)
@@ -76,10 +82,15 @@ namespace Duck
             MeshLoader ml = new MeshLoader();
             Mesh cube = ml.GetCube();
             AddMeshToDraw(cube, MyShaderType.CUBE);
+
+            Duck duck = new Duck(MyShaderType.DUCK);
+            duck.AddOnScene();
         }
 
-        private void LoadTexture(Bitmap texture, ref int id)
+        private void LoadTexture(string name, ref int id)
         {
+            Bitmap texture = new Bitmap(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "texture", name));
+
             GL.GenTextures(1, out id);
             GL.BindTexture(TextureTarget.Texture2D, id);
 
@@ -137,34 +148,29 @@ namespace Duck
         {
             foreach (ObjectsToDraw otd in objectsToDraw)
                 otd.DoAnimation(deltaTime);
-
-            GL.ClearColor(Color.Brown);
+            
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-            RenderParticles(deltaTime, camera);
+            RenderWater(camera);
             RenderCube(camera);
+            RenderDuck(camera);
 
             //tutaj dodac renderowanie przez nowe shadery
         }
 
-        private void RenderParticles(float deltaTime, Camera camera)
+        private void RenderWater(Camera camera)
         {
             ShaderProgram activeShader = shaders[MyShaderType.WATER];
             GL.UseProgram(activeShader.ProgramID);
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
 
+            GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
+            GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
+            GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
+
             BindCameraAndProjectionToShaders(camera, activeShader);
             BindLightDataToShaders(activeShader);
-
-            GL.Begin(PrimitiveType.Triangles);
-
-            GL.Color3(lightColor);
-            GL.Vertex3(lightPosition);
-            GL.Vertex3(lightPosition + new Vector3(1.0f, 0.0f, 0.0f));
-            GL.Vertex3(lightPosition + new Vector3(0.0f, 1.0f, 0.0f));
-
-            GL.End();
 
             foreach (Mesh m in meshesToDraw[(int)MyShaderType.WATER])
                 DrawMesh(m, activeShader, PrimitiveType.Quads);
@@ -183,17 +189,39 @@ namespace Duck
 
             GL.Enable(EnableCap.TextureCubeMap);
 
-
             GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
             GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
             GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
-
 
             BindCameraAndProjectionToShaders(camera, activeShader);
             BindLightDataToShaders(activeShader);
 
             foreach (Mesh m in meshesToDraw[(int)MyShaderType.CUBE])
                 DrawMesh(m, activeShader, PrimitiveType.Quads);
+
+            GL.Flush();
+        }
+
+        private void RenderDuck(Camera camera)
+        {
+            ShaderProgram activeShader = shaders[MyShaderType.DUCK];
+            GL.UseProgram(activeShader.ProgramID);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+
+            GL.Enable(EnableCap.Texture2D);
+
+            //GL.Uniform1(activeShader.GetUniform("cubeSampler"), cubeTextureNr);
+            //GL.ActiveTexture(TextureUnit.Texture0 + cubeTextureNr);
+            //GL.BindTexture(TextureTarget.TextureCubeMap, cubeTextureID);
+
+            BindCameraAndProjectionToShaders(camera, activeShader);
+            BindLightDataToShaders(activeShader);
+
+            foreach (Mesh m in meshesToDraw[(int)MyShaderType.DUCK])
+                DrawMesh(m, activeShader, PrimitiveType.Triangles);
 
             GL.Flush();
         }
