@@ -105,7 +105,12 @@ namespace Duck
 
         private void RandomDropOfWater()
         {
-            MainMap[rand.Next(1, N - 1), rand.Next(1, N - 1)] = (float)-rand.NextDouble() / 10f;// -.05f;
+            Disturb(rand.Next(1, N - 1), rand.Next(1, N - 1));
+        }
+
+        public void Disturb(int x, int y)
+        {
+            MainMap[x, y] = (float)-rand.NextDouble() / 10f;// -.05f;
         }
     }
 }

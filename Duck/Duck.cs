@@ -9,8 +9,11 @@ namespace Duck
 {
     class Duck : ObjectsToDraw
     {
-        public Duck(MyShaderType shaderType) : base(shaderType)
+        Water water;
+
+        public Duck(MyShaderType shaderType, Water water) : base(shaderType)
         {
+            this.water = water;
             MeshLoader ml = new MeshLoader();
             meshes = new Mesh[1] { ml.LoadMesh("duck") };
             meshes[0].ModelMatrix = Matrix4.CreateScale(0.001f);

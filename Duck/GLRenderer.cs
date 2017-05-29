@@ -18,7 +18,7 @@ namespace Duck
 
         private float ambientCoefficient = 1.0f;
         private Vector3 lightColor = new Vector3(0.9f, 0.8f, 0.8f);
-        private Vector3 lightPosition = new Vector3(1.0f, 1.0f, 1.0f);
+        private Vector3 lightPosition = new Vector3(0.0f, 1.0f, 0.0f);
 
         private static List<Mesh>[] meshesToDraw;
         private static List<ObjectsToDraw> objectsToDraw;
@@ -83,7 +83,7 @@ namespace Duck
             Mesh cube = ml.GetCube();
             AddMeshToDraw(cube, MyShaderType.CUBE);
 
-            Duck duck = new Duck(MyShaderType.DUCK);
+            Duck duck = new Duck(MyShaderType.DUCK, water);
             duck.AddOnScene();
         }
 

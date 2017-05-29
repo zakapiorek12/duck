@@ -17,8 +17,8 @@ namespace Duck
 
         public Camera() : base()
         {
-            cameraPosition = new Vector3(.5f, .15f, 1);
-            Rotate(new Point(-1, 160));
+            cameraPosition = new Vector3(1f, 1f, 1f);
+            Rotate(new Point(-100, 160));
             CalculateResultMartix();
         }
 
